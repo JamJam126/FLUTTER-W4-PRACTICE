@@ -10,23 +10,36 @@ void main() {
 }
 
 class ColorService extends ChangeNotifier {
-  int redTapCount = 0;
-  int blueTapCount = 0;
+  final Map<CardType, int> _tapCounts = {
+    for (var type in CardType.values) type: 0,
+  };
 
-  void increemntRedTapCount() {
-    redTapCount++;
-    notifyListeners();
-  }
+  Map<CardType, int> get tapCounts => _tapCounts;
 
-  void increemntBlueTapCount() {
-    blueTapCount++;
+  void incrementTabCount(CardType type) {
+    _tapCounts[type] = (_tapCounts[type] ?? 0) + 1;
     notifyListeners();
   }
 }
 
 final colorService = ColorService();
 
-enum CardType { red, blue }
+enum CardType { red, blue, yellow, green }
+
+extension CardTypeExtension on CardType {
+  Color get color {
+    switch (this) {
+      case CardType.red:
+        return Colors.red;
+      case CardType.blue:
+        return Colors.blue;
+      case CardType.yellow:
+        return Colors.yellow;
+      case CardType.green:
+        return Colors.green;
+    }
+  }
+}
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -67,17 +80,16 @@ class _HomeState extends State<Home> {
 }
 
 class ColorTapsScreen extends StatelessWidget {
-
-  const ColorTapsScreen({super.key,});
+  const ColorTapsScreen({
+    super.key,
+  });
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Color Taps')),
-      body: Column(
-        children: [
-          ColorTap(type: CardType.red),
-          ColorTap(type: CardType.blue),
-        ],
+      body: ListView(
+        padding: const EdgeInsets.all(8),
+        children: CardType.values.map((type) => ColorTap(type: type)).toList(),
       ),
     );
   }
@@ -86,36 +98,20 @@ class ColorTapsScreen extends StatelessWidget {
 class ColorTap extends StatelessWidget {
   final CardType type;
 
-  const ColorTap({
-    super.key,
-    required this.type,
-  });
-
-  Color get backgroundColor => type == CardType.red ? Colors.red : Colors.blue;
-
-  void handleTap() {
-    if (type == CardType.red) {
-      colorService.increemntRedTapCount();
-    } else {
-      colorService.increemntBlueTapCount();
-    }
-  }
+  const ColorTap({super.key, required this.type});
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: colorService,
       builder: (context, _) {
-        final tapCount = type == CardType.red
-            ? colorService.redTapCount
-            : colorService.blueTapCount;
-
+        final tapCount = colorService.tapCounts[type] ?? 0;
         return GestureDetector(
-          onTap: handleTap,
+          onTap: () => colorService.incrementTabCount(type),
           child: Container(
-            margin: EdgeInsets.all(10),
+            margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: type.color,
               borderRadius: BorderRadius.circular(10),
             ),
             width: double.infinity,
@@ -123,12 +119,12 @@ class ColorTap extends StatelessWidget {
             child: Center(
               child: Text(
                 'Taps: $tapCount',
-                style: TextStyle(fontSize: 24, color: Colors.white),
+                style: const TextStyle(fontSize: 24, color: Colors.white),
               ),
             ),
           ),
         );
-      }
+      },
     );
   }
 }
@@ -142,23 +138,18 @@ class StatisticsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Statistics')),
       body: Center(
         child: ListenableBuilder(
-          listenable: colorService,
-          builder: (context, _) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Red Taps: ${colorService.redTapCount}', 
-                  style: const TextStyle(fontSize: 24)
-                ),
-                Text(
-                  'Blue Taps: ${colorService.blueTapCount}', 
-                  style: const TextStyle(fontSize: 24)
-                ),
-              ],
-            );
-          }
-        ),
+            listenable: colorService,
+            builder: (context, _) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: colorService.tapCounts.entries.map((entry) {
+                  return Text(
+                    '${entry.key.name.toUpperCase()} Taps: ${entry.value}',
+                    style: const TextStyle(fontSize: 24),
+                  );
+                }).toList(),
+              );
+            }),
       ),
     );
   }
