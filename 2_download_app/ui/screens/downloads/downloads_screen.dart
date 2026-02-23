@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lab/TERM-2/W4-PRACTICE/2_download_app/ui/screens/downloads/widgets/download_tile.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_color_provider.dart';
 import '../../theme/theme.dart';
@@ -41,6 +42,8 @@ class DownloadsScreen extends StatelessWidget {
           const SizedBox(height: 50),
 
           // TODO - Add the Download tiles
+
+          ...controllers.map((controller) => DownloadTile(controller: controller))
         ],
       ),
     );
